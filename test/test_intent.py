@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from intent_classification_agent import IntentClassificationAgent
+from src.intent_classification_agent import IntentClassificationAgent
 
 
 class TestIntentClassificationAgent:
@@ -13,7 +13,7 @@ class TestIntentClassificationAgent:
         """Setup mocked OpenAI client for each test method"""
         self.mock_api_key = "test-api-key-123"
         # Mock OpenAI client to avoid real API calls during testing
-        with patch('intent_classification_agent.openai.OpenAI') as mock_openai_class:
+        with patch('src.intent_classification_agent.openai.OpenAI') as mock_openai_class:
             self.mock_client = Mock()
             mock_openai_class.return_value = self.mock_client
             self.agent = IntentClassificationAgent(openai_api_key=self.mock_api_key)
@@ -21,7 +21,7 @@ class TestIntentClassificationAgent:
 
     def test_initialization(self):
         """Test agent initializes OpenAI client with provided API key"""
-        with patch('intent_classification_agent.openai.OpenAI') as mock_openai_class:
+        with patch('src.intent_classification_agent.openai.OpenAI') as mock_openai_class:
             mock_client = Mock()
             mock_openai_class.return_value = mock_client
             agent = IntentClassificationAgent(openai_api_key="test-key")
@@ -29,7 +29,7 @@ class TestIntentClassificationAgent:
 
     def test_initialization_with_env_var(self):
         """Test agent initialization using OPENAI_API_KEY environment variable"""
-        with patch('intent_classification_agent.openai.OpenAI') as mock_openai_class, \
+        with patch('src.intent_classification_agent.openai.OpenAI') as mock_openai_class, \
              patch.dict('os.environ', {'OPENAI_API_KEY': 'env-key'}):
             mock_client = Mock()
             mock_openai_class.return_value = mock_client

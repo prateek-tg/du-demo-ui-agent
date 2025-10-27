@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from data_retrieval_agent import DataRetrievalAgent
+from src.data_retrieval_agent import DataRetrievalAgent
 
 
 class TestDataRetrievalAgent:
@@ -38,7 +38,7 @@ class TestDataRetrievalAgent:
         assert self.agent._get_query_for_intent("billing") == "billing information"
         assert self.agent._get_query_for_intent("unknown_intent") == "available plans"
 
-    @patch('data_retrieval_agent.requests.get')
+    @patch('src.data_retrieval_agent.requests.get')
     def test_retrieve_data_single_intent(self, mock_get):
         """Test successful data retrieval for single telecom intent"""
         # Mock successful API response with usage data
@@ -67,7 +67,7 @@ class TestDataRetrievalAgent:
         assert result["message"] == "I can help with telecom services..."
         assert result["results"] == {}
 
-    @patch('data_retrieval_agent.requests.get')
+    @patch('src.data_retrieval_agent.requests.get')
     def test_retrieve_data_api_error(self, mock_get):
         """Test graceful error handling when external API call fails"""
         # Mock the _call_api method to return the expected error structure
@@ -164,7 +164,7 @@ class TestDataRetrievalAgent:
         assert result["query"] == "usage data"
         assert result["api_url"] == self.mock_api_url
 
-    @patch('data_retrieval_agent.requests.get')
+    @patch('src.data_retrieval_agent.requests.get')
     def test_call_api_success(self, mock_get):
         """Test successful external API call with proper response handling"""
         # Mock successful API response
@@ -179,7 +179,7 @@ class TestDataRetrievalAgent:
         # Verify successful API response returned
         assert result == expected_data
 
-    @patch('data_retrieval_agent.requests.get')
+    @patch('src.data_retrieval_agent.requests.get')
     def test_call_api_network_error(self, mock_get):
         """Test handling of network connectivity errors during API calls"""
         from requests.exceptions import ConnectionError
@@ -192,7 +192,7 @@ class TestDataRetrievalAgent:
         assert "API call failed" in result["error_message"]
         assert result["context"] == "network_error"
 
-    @patch('data_retrieval_agent.requests.get')
+    @patch('src.data_retrieval_agent.requests.get')
     def test_call_api_unexpected_error(self, mock_get):
         """Test handling of unexpected exceptions during API calls"""
         mock_get.side_effect = ValueError("Unexpected error")

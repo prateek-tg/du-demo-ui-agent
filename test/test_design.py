@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from design_agent import DesignAgent
+from src.design_agent import DesignAgent
 
 
 class TestDesignAgent:
@@ -16,7 +16,7 @@ class TestDesignAgent:
         self.mock_design_api_url = "http://design-api.example.com"
         self.agent = DesignAgent(design_api_url=self.mock_design_api_url)
 
-    @patch('design_agent.requests.post')
+    @patch('src.design_agent.requests.post')
     def test_get_design_success(self, mock_post):
         """Test successful UI design generation from external API"""
         # Mock successful design API response
@@ -41,7 +41,7 @@ class TestDesignAgent:
         assert "Design API call successful" in result["message"]
         assert "templates" in result["results"]
 
-    @patch('design_agent.requests.post')
+    @patch('src.design_agent.requests.post')
     def test_get_design_http_error(self, mock_post):
         """Test handling of HTTP errors from design API"""
         # Create a proper requests exception
@@ -59,7 +59,7 @@ class TestDesignAgent:
         assert result["error"] == True
         assert "Design API call failed" in result["error_message"]
 
-    @patch('design_agent.requests.post')
+    @patch('src.design_agent.requests.post')
     def test_get_design_network_error(self, mock_post):
         """Test handling of network connectivity errors"""
         from requests.exceptions import ConnectionError
@@ -74,7 +74,7 @@ class TestDesignAgent:
         assert result["error"] == True
         assert "Design API call failed" in result["error_message"]
 
-    @patch('design_agent.requests.post')
+    @patch('src.design_agent.requests.post')
     def test_get_design_with_empty_message(self, mock_post):
         """Test UI design generation with minimal user context"""
         # Mock successful response for empty message
@@ -94,7 +94,7 @@ class TestDesignAgent:
         assert result["error"] == False
         assert "design" in result["results"]
 
-    @patch('design_agent.requests.post')
+    @patch('src.design_agent.requests.post')
     def test_get_design_unexpected_error(self, mock_post):
         """Test handling of unexpected exceptions during design generation"""
         mock_post.side_effect = ValueError("Unexpected error")
@@ -116,7 +116,7 @@ class TestDesignAgent:
             # Verify environment variable used for design API URL
             assert agent.design_api_url == 'http://env-design.com'
 
-    @patch('design_agent.requests.post')
+    @patch('src.design_agent.requests.post')
     def test_get_design_request_payload_tracking(self, mock_post):
         """Test proper request payload construction and tracking"""
         # Mock successful response

@@ -5,8 +5,8 @@ Agent 1: Intent Classification
 Agent 2: Data Retrieval
 """
 
-from intent_classification_agent import IntentClassificationAgent
-from data_retrieval_agent import DataRetrievalAgent
+from src.intent_classification_agent import IntentClassificationAgent
+from src.data_retrieval_agent import DataRetrievalAgent
 from typing import Dict, Any
 import os
 from dotenv import load_dotenv

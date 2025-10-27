@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, List
+from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
 import uvicorn
@@ -14,16 +15,46 @@ from loguru import logger
 
 # Import agent orchestrator and design agent
 from orchestrator import Orchestrator
-from design_agent import DesignAgent
+from src.design_agent import DesignAgent
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize FastAPI app with metadata
+# Global agent instances (initialized during lifespan)
+orchestrator = None
+design_agent = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan event handler.
+    Initializes agent system and checks for required environment variables.
+    """
+    global orchestrator, design_agent
+    # Ensure OpenAI API key is set
+    if not os.getenv("OPENAI_API_KEY"):
+        raise RuntimeError("OPENAI_API_KEY environment variable is required")
+    try:
+        # Initialize agent orchestrator and design agent
+        orchestrator = Orchestrator()
+        design_agent = DesignAgent()
+        logger.success("2-Agent System initialized successfully")
+        logger.success("Design Agent initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize 2-Agent System: {e}")
+        raise RuntimeError(f"System initialization failed: {e}")
+    
+    yield
+    
+    # Cleanup (if needed)
+    logger.info("Shutting down 2-Agent System")
+
+# Initialize FastAPI app with metadata and lifespan
 app = FastAPI(
     title="2-Agent Telecom Assistant API",
     description="Intent classification and data retrieval API for telecom services",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware to allow cross-origin requests (adjust for production)
@@ -35,9 +66,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global agent instances (initialized on startup)
-orchestrator = None
-design_agent = None
+
 
 # Pydantic models for request/response validation
 class QueryRequest(BaseModel):
@@ -72,25 +101,7 @@ class DesignRequest(BaseModel):
     type: str = Field(..., description="The type of design to retrieve")
     message: str = Field(..., description="The message to include in the design request")
 
-@app.on_event("startup")
-async def startup_event():
-    """
-    FastAPI startup event handler.
-    Initializes agent system and checks for required environment variables.
-    """
-    global orchestrator, design_agent
-    # Ensure OpenAI API key is set
-    if not os.getenv("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY environment variable is required")
-    try:
-        # Initialize agent orchestrator and design agent
-        orchestrator = Orchestrator()
-        design_agent = DesignAgent()
-        logger.success("2-Agent System initialized successfully")
-        logger.success("Design Agent initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize 2-Agent System: {e}")
-        raise RuntimeError(f"System initialization failed: {e}")
+
 
 @app.get("/", response_model=Dict[str, str])
 async def root():
@@ -128,16 +139,14 @@ async def process_query(request: QueryRequest):
     if orchestrator is None:
         return {
             "error": True,
-            "error_message": "System not initialized",
-            "context": "startup",
+            "message": "System not initialized",
             "results": {},
             "queries_used": []
         }
     if not request.message.strip():
         return {
             "error": True,
-            "error_message": "Message cannot be empty",
-            "context": "validation",
+            "message": "Message cannot be empty",
             "results": {},
             "queries_used": []
         }
@@ -148,8 +157,7 @@ async def process_query(request: QueryRequest):
         if result.get("error"):
             error_response = {
                 "error": True,
-                "error_message": result.get("error_message", result.get("message", "Query processing failed")),
-                "context": result.get("context", "agent_error"),
+                "message": result.get("error_message", result.get("message", "Query processing failed")),
                 "results": result.get("results", {}),
                 "queries_used": result.get("queries_used", [])
             }
@@ -175,8 +183,7 @@ async def process_query(request: QueryRequest):
         logger.error(f"Query processing failed: {e}")
         return {
             "error": True,
-            "error_message": f"Query processing failed: {str(e)}",
-            "context": "exception",
+            "message": f"Query processing failed: {str(e)}",
             "results": {},
             "queries_used": []
         }

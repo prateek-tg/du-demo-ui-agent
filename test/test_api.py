@@ -60,8 +60,8 @@ class TestFastAPIApp:
     @patch('main.Orchestrator')
     @patch('main.DesignAgent')
     def test_startup_event_success(self, mock_design_agent, mock_orchestrator):
-        """Test successful FastAPI startup initialization with mocked agents"""
-        from main import startup_event
+        """Test successful FastAPI lifespan initialization with mocked agents"""
+        from main import lifespan, app
         import asyncio
         
         # Mock successful agent initialization
@@ -70,8 +70,12 @@ class TestFastAPIApp:
         mock_orchestrator.return_value = mock_system_instance
         mock_design_agent.return_value = mock_design_instance
         
-        # Run the startup event
-        asyncio.run(startup_event())
+        # Test the lifespan context manager
+        async def test_lifespan():
+            async with lifespan(app):
+                pass  # The initialization happens in the context manager
+        
+        asyncio.run(test_lifespan())
         
         # Verify both agents were created successfully
         mock_orchestrator.assert_called_once()
@@ -79,26 +83,34 @@ class TestFastAPIApp:
 
     @patch.dict('os.environ', {}, clear=True)
     def test_startup_event_no_api_key(self):
-        """Test startup fails when OpenAI API key is missing"""
-        from main import startup_event
+        """Test lifespan fails when OpenAI API key is missing"""
+        from main import lifespan, app
         import asyncio
         
+        async def test_lifespan():
+            async with lifespan(app):
+                pass
+        
         with pytest.raises(RuntimeError, match="OPENAI_API_KEY environment variable is required"):
-            asyncio.run(startup_event())
+            asyncio.run(test_lifespan())
 
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
     @patch('main.Orchestrator')
     @patch('main.DesignAgent')
     def test_startup_event_initialization_failure(self, mock_design_agent, mock_orchestrator):
-        """Test startup fails gracefully when agent initialization throws exception"""
-        from main import startup_event
+        """Test lifespan fails gracefully when agent initialization throws exception"""
+        from main import lifespan, app
         import asyncio
         
         # Mock agent initialization failure
         mock_orchestrator.side_effect = Exception("Initialization failed")
         
+        async def test_lifespan():
+            async with lifespan(app):
+                pass
+        
         with pytest.raises(RuntimeError, match="System initialization failed"):
-            asyncio.run(startup_event())
+            asyncio.run(test_lifespan())
 
     def test_pydantic_models(self):
         """Test Pydantic request/response models validation and field handling"""
