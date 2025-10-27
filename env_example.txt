@@ -1,0 +1,7 @@
+# Example .env file for Telecom Assistant API
+# Copy this file to .env and fill in your actual secrets and URLs
+
+OPENAI_API_KEY="your-openai-api-key-here"
+OPENAI_MODEL="gpt-4o-mini"
+DATA_RETRIEVAL_API_URL="http://your-data-api-url-here"
+DESIGN_API_URL="http://your-design-api-url-here"
